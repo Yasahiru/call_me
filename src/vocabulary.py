@@ -14,6 +14,6 @@ class Vocabulary:
             data = json.load(f)
 
         for d in data:
-            print(d)
+            print(self.llm.decode(d))
 
 
