@@ -10,67 +10,60 @@ class Parser:
         self.prompts = []
 
     def load_functions(self, file: str) -> None:
-        try:
-            with open(file, mode="r") as f:
-                data = json.load(f)
+        # try:
+        with open(file, mode="r") as f:
+            data = json.load(f)
+        if not isinstance(data, list):
+            print("Error: JSON root must be a list")
+            sys.exit(1)
+        for fun in data:
+            params = {}
+            for k, v in fun["parameters"].items():
+                params[k] = ParameterDefinition(type=v["type"])
+            ret = ReturnDefinition(type=fun["returns"]["type"])
+            function = FunctionDefinition(
+                name=fun["name"],
+                description=fun["description"],
+                parameters=dict(params),
+                returns=ret
+            )
+            self.functions_obj.append(function)
+        # except FileNotFoundError:
+        #     print(f"Error: File '{self.path}' not found.")
 
-            if not isinstance(data, list):
-                print("Error: JSON root must be a list")
-                sys.exit(1)
+        # except json.JSONDecodeError:
+        #     print(f"Error: '{self.path}' is not a valid JSON file.")
 
-            for fun in data:
-                params = {}
+        # except ValueError as e:
+        #     print(f"Validation error:\n{e}")
 
-                for k, v in fun["parameters"].items():
-                    params[k] = ParameterDefinition(type=v["type"])
+        # except PermissionError:
+        #     print(f"Error: Permission denied for '{self.path}'.")
 
-                ret = ReturnDefinition(type=fun["returns"]["type"])
-
-                function = FunctionDefinition(
-                    name=fun["name"],
-                    description=fun["description"],
-                    parameters=dict(params),
-                    returns=ret
-                )
-                self.functions_obj.append(function)
-        except FileNotFoundError:
-            print(f"Error: File '{self.path}' not found.")
-
-        except json.JSONDecodeError:
-            print(f"Error: '{self.path}' is not a valid JSON file.")
-
-        except ValueError as e:
-            print(f"Validation error:\n{e}")
-
-        except PermissionError:
-            print(f"Error: Permission denied for '{self.path}'.")
-
-        sys.exit(1)
+        # sys.exit(1)
 
     def load_prompts(self, file: str) -> None:
-        try:
-            with open(file, mode="r") as f:
-                data = json.load(f)
+        # try:
+        with open(file, mode="r") as f:
+            data = json.load(f)
+        if not isinstance(data, list):
+            print("Error: JSON root must be a list")
+            sys.exit(1)
+        for line in data:
+            self.prompts.append(
+                Prompt(prompt=line["prompt"])
+            )
 
-            if not isinstance(data, list):
-                print("Error: JSON root must be a list")
-                sys.exit(1)
+        # except FileNotFoundError:
+        #     print(f"Error: File '{self.path}' not found.")
 
-            for line in data:
-                self.prompts.append(
-                    Prompt(prompt=line["prompt"])
-                )
+        # except json.JSONDecodeError:
+        #     print(f"Error: '{self.path}' is not a valid JSON file.")
 
-        except FileNotFoundError:
-            print(f"Error: File '{self.path}' not found.")
+        # except ValueError as e:
+        #     print(f"Validation error:\n{e}")
 
-        except json.JSONDecodeError:
-            print(f"Error: '{self.path}' is not a valid JSON file.")
+        # except PermissionError:
+        #     print(f"Error: Permission denied for '{self.path}'.")
 
-        except ValueError as e:
-            print(f"Validation error:\n{e}")
-
-        except PermissionError:
-            print(f"Error: Permission denied for '{self.path}'.")
-
-        sys.exit(1)
+        # sys.exit(1)
