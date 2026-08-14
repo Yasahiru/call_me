@@ -3,6 +3,7 @@ from typing import List
 
 
 class PromptBuilder:
+
     def build(
         self,
         user_prompt: str,

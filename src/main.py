@@ -1,6 +1,7 @@
 import os
-import argparse
+import time
 import json
+import argparse
 from .parser import Parser
 from llm_sdk import Small_LLM_Model
 from .decoder import ConstrainedDecoder
@@ -45,11 +46,14 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def main() -> None:
+    start = time.time
     args = parse_arguments()
-
     p = Parser()
-    fonctions = p.load_functions(args.functions_definition)
-    prompts = p.load_prompts(args.input)
+    p.load_functions(args.functions_definition)
+    p.load_prompts(args.input)
+
+    functions = p.functions_obj
+    prompts = p.prompts
 
     model = Small_LLM_Model(model_name=args.model)
     constrained_decoder = ConstrainedDecoder(model)
@@ -57,14 +61,15 @@ def main() -> None:
     result: list[dict[str, Any]] = []
     for prompt in prompts:
         try:
-            output = constrained_decoder.decode(prompt.prompt, fonctions)
-            result.append(output.model_dump())
+            output = constrained_decoder.decode(prompt.prompt, functions)
+            # result.append(output.model_dump())
+            print()
         except ValueError as e:
             print(f"Error: {e}")
 
     # try:
-    with open(args.output, 'w') as f:
-        json.dump(result, f, indent=4)
+    # with open(args.output, 'w') as f:
+    #     json.dump(result, f, indent=4)
     # except OSError as e:
     #     raise ValueError(f"Error: could not write output {e}")
     # except TypeError as e:
