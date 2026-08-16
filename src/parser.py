@@ -19,9 +19,9 @@ class Parser:
             sys.exit(1)
         data.append(
                 {
-                    "name": "fn_unknown",
+                    "name": "No function available for this prompt",
                     "description": (
-                        "Fallback function to use when no other function "
+                        "Fallback function to use just when no other function "
                         "matches the user's prompt."
                     ),
                     "parameters": {},

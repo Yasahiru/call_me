@@ -139,7 +139,10 @@ class ConstrainedDecoder:
             logits = self._cached_logits(tuple(input_ids + result))
             next_token = logits.index(max(logits))
             decoded = self.model.decode([next_token])
-
+            # print("inp ids: ",
+            #     self.model.decode(input_ids)
+            # )
+            # print("decoded", decoded)
             if '"' in decoded and ' "' != decoded:
                 if len(decoded) == 1:
                     input_ids.extend(result)
@@ -167,7 +170,7 @@ class ConstrainedDecoder:
                 for pos, (key, value) in enumerate(fn.parameters.items()):
                     print(f"   Generating parameter '{key}'...")
 
-                    self.force_token(f'"{key}":', input_ids)
+                    self.force_token(f'"{key}":"', input_ids)
                     if value.type in ["number", "integer", "float"]:
 
                         number = self.generate_number(input_ids)
@@ -178,14 +181,8 @@ class ConstrainedDecoder:
 
                     elif value.type in ["string", "boolean"]:
 
-                        input_ids.extend(
-                            self.model.encode('"').tolist()[0]
-                        )
-
+                        input_ids.extend(self.model.encode('"').tolist()[0])
                         text = self.generate_string(input_ids)
-                        input_ids.extend(
-                            self.model.encode('"').tolist()[0]
-                        )
 
                         if value.type == "boolean":
                             output[key] = text.lower() == "true"

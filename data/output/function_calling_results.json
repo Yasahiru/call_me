@@ -1,0 +1,11 @@
+[
+    {
+        "prompt": "Replace all vowels in 'Programming is fun' with asterisks",
+        "name": "fn_substitute_string_with_regex",
+        "parameters": {
+            "source_string": "[45719, 374, 2464]",
+            "regex": "a|e|i|o|u",
+            "replacement": "asterisk"
+        }
+    }
+]
