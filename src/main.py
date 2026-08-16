@@ -62,14 +62,14 @@ def main() -> None:
     for prompt in prompts:
         try:
             output = constrained_decoder.decode(prompt.prompt, functions)
-            # result.append(output.model_dump())
+            result.append(output.model_dump())
             print()
         except ValueError as e:
             print(f"Error: {e}")
 
     # try:
-    # with open(args.output, 'w') as f:
-    #     json.dump(result, f, indent=4)
+    with open(args.output, 'w') as f:
+        json.dump(result, f, indent=4)
     # except OSError as e:
     #     raise ValueError(f"Error: could not write output {e}")
     # except TypeError as e:

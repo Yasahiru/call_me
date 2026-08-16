@@ -1,4 +1,4 @@
-from .models import FunctionDefinition
+from .models import FunctionDefinition  # type: ignore
 from typing import List
 
 
@@ -8,7 +8,7 @@ class PromptBuilder:
         self,
         user_prompt: str,
         functions: List[FunctionDefinition]
-    ) -> None:
+    ) -> str:
         prompt = "Available functions:\n"
 
         for fn in functions:

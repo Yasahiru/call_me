@@ -1,8 +1,10 @@
 from functools import lru_cache
-from typing import List, Tuple, Set
 from llm_sdk import Small_LLM_Model  # type: ignore
-from .prompt_builder import PromptBuilder
-from .models import FunctionDefinition, FunctionCall
+from typing import List, Tuple, Set, Any
+from .prompt_builder import PromptBuilder  # type: ignore
+from .models import FunctionDefinition, FunctionCall  # type: ignore
+
+import sys
 
 
 class ConstrainedDecoder:
@@ -13,7 +15,7 @@ class ConstrainedDecoder:
     @lru_cache(maxsize=512)
     def _cached_logits(
         self,
-        inp_ids_tup: Tuple[int, any]
+        inp_ids_tup: Tuple[int, Any]
     ) -> List[float]:
         return self.model.get_logits_from_input_ids(
             list(inp_ids_tup)
@@ -41,18 +43,18 @@ class ConstrainedDecoder:
         text: str,
         input_ids: List[int]
     ) -> None:
-        token_ids = self.model.encode(text).tolist[0]
+        token_ids = self.model.encode(text).tolist()[0]
         input_ids.extend(token_ids)
 
-    def generate_function_names(
+    def generate_function_name(
         self,
         input_ids: List[int],
         func_names: List[str]
     ) -> None:
 
         candidates = {
-            name: self.model.encode(name + '"').tolist()[0]
-            for name in func_names
+            n.name: self.model.encode(n.name + '"').tolist()[0]
+            for n in func_names
         }
 
         generated: List[int] = []
@@ -76,7 +78,7 @@ class ConstrainedDecoder:
                 allowed_tokens,
             )
 
-            """ 
+            """
                 we add the token that the llm gave us
                 to the prompt also to the generated var
                 and we create a new candidates dict
@@ -86,12 +88,11 @@ class ConstrainedDecoder:
             new_candidates = {}
 
             for name, tokens in candidates.items():
-                """ 
+                """
                     first we verify that the candidate has a lenght
                     less or equal to what we've generated
-                    
                     in the sencond condition we check if the condidate
-                    have the same prefix as the generated one 
+                    have the same prefix as the generated one
                 """
                 if (
                     len(generated) <= len(tokens)
@@ -158,7 +159,49 @@ class ConstrainedDecoder:
         functions: list[FunctionDefinition],
         input_ids: list[int],
     ) -> dict[str, Any] | None:
-        ...
+
+        for fn in functions:
+            if fn.name == fn_name:
+
+                output: dict[str, Any] = {}
+                for pos, (key, value) in enumerate(fn.parameters.items()):
+                    print(f"   Generating parameter '{key}'...")
+
+                    self.force_token(f'"{key}":', input_ids)
+                    if value.type in ["number", "integer", "float"]:
+
+                        number = self.generate_number(input_ids)
+                        if value.type == "integer":
+                            output[key] = int(float(number))
+                        else:
+                            output[key] = float(number)
+
+                    elif value.type in ["string", "boolean"]:
+
+                        input_ids.extend(
+                            self.model.encode('"').tolist()[0]
+                        )
+
+                        text = self.generate_string(input_ids)
+                        input_ids.extend(
+                            self.model.encode('"').tolist()[0]
+                        )
+
+                        if value.type == "boolean":
+                            output[key] = text.lower() == "true"
+                        else:
+                            output[key] = text
+
+                    else:
+                        raise ValueError("Invalid parameter type")
+
+                    if pos < len(fn.parameters) - 1:
+                        self.force_token(", ", input_ids)
+                    else:
+                        self.force_token("}", input_ids)
+
+                return output
+        return None
 
     def decode(
         self,
@@ -166,9 +209,48 @@ class ConstrainedDecoder:
         functions: List[FunctionDefinition]
     ) -> FunctionCall:
 
+        print(f"\n{'='*50}")
+        print(f"Prompt: {prompt}")
+        print(f"{'='*50}")
+
         general_prompt = self.builder.build(
             prompt,
             functions
         )
+
         input_ids = self.model.encode(general_prompt).tolist()[0]
         logits = self._cached_logits(tuple(input_ids))
+        function_names = [fn for fn in functions]
+
+        self.force_token('{"name: "', input_ids)
+        print("Selecting function...")
+        function_name = self.generate_function_name(
+            input_ids,
+            function_names
+        )
+        print(f" Function selected: {function_name}")
+
+        self.force_token('", "parameters": {', input_ids)
+        print("Generating parameters...")
+        parameters = self.generate_parameters(
+            function_name,
+            functions,
+            input_ids
+        )
+
+        # input_ids.append(
+        #     self.model.encode("}").tolist()[0][0]
+        # )
+
+        print(f"{'='*50}")
+        print(
+            f'Result: {{"name": "{function_name}", '
+            f'"parameters": {parameters}}}'
+        )
+        print(f"{'='*50}\n")
+
+        return FunctionCall(
+            prompt=prompt,
+            name=function_name,
+            parameters=parameters
+        )

@@ -1,4 +1,4 @@
-from .main import main
+from .main import main  # type: ignore
 # Qwen/Qwen2-0.5B
 # TinyLlama/TinyLlama-1.1B-Chat-v1.0
 # Qwen/Qwen3-1.7B

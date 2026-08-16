@@ -1,5 +1,5 @@
-from .models import FunctionDefinition, ParameterDefinition
-from .models import ReturnDefinition, Prompt
+from .models import FunctionDefinition, ParameterDefinition  # type: ignore
+from .models import ReturnDefinition, Prompt  # type: ignore
 import json
 import sys
 
@@ -17,6 +17,19 @@ class Parser:
         if not isinstance(data, list):
             print("Error: JSON root must be a list")
             sys.exit(1)
+        data.append(
+                {
+                    "name": "fn_unknown",
+                    "description": (
+                        "Fallback function to use when no other function "
+                        "matches the user's prompt."
+                    ),
+                    "parameters": {},
+                    "returns": {
+                        "type": "string"
+                    },
+                }
+            )
 
         for fun in data:
             params = {}
