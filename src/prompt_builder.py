@@ -18,7 +18,6 @@ class PromptBuilder:
 
             for name, parameter in fn.parameters.items():
                 prompt += f"- {name}: {parameter.type}\n"
-
             prompt += f"Returns: {fn.returns.type}\n"
 
         prompt += "User request:\n"

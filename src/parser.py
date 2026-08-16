@@ -13,13 +13,17 @@ class Parser:
         # try:
         with open(file, mode="r") as f:
             data = json.load(f)
+
         if not isinstance(data, list):
             print("Error: JSON root must be a list")
             sys.exit(1)
+
         for fun in data:
             params = {}
+
             for k, v in fun["parameters"].items():
                 params[k] = ParameterDefinition(type=v["type"])
+
             ret = ReturnDefinition(type=fun["returns"]["type"])
             function = FunctionDefinition(
                 name=fun["name"],
@@ -46,9 +50,11 @@ class Parser:
         # try:
         with open(file, mode="r") as f:
             data = json.load(f)
+
         if not isinstance(data, list):
             print("Error: JSON root must be a list")
             sys.exit(1)
+
         for line in data:
             self.prompts.append(
                 Prompt(prompt=line["prompt"])
