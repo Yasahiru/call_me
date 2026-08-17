@@ -4,7 +4,7 @@ from typing import List, Tuple, Set, Any
 from .prompt_builder import PromptBuilder  # type: ignore
 from .models import FunctionDefinition, FunctionCall  # type: ignore
 
-import sys
+# import sys
 
 
 class ConstrainedDecoder:
@@ -16,7 +16,7 @@ class ConstrainedDecoder:
     def _cached_logits(
         self,
         inp_ids_tup: Tuple[int, Any]
-    ) -> List[float]:
+    ) -> Any:
         return self.model.get_logits_from_input_ids(
             list(inp_ids_tup)
         )
@@ -50,10 +50,10 @@ class ConstrainedDecoder:
         self,
         input_ids: List[int],
         func_names: List[str]
-    ) -> None:
+    ) -> Any:
 
         candidates = {
-            n.name: self.model.encode(n.name + '"').tolist()[0]
+            n: self.model.encode(n + '"').tolist()[0]
             for n in func_names
         }
 
@@ -131,30 +131,21 @@ class ConstrainedDecoder:
                 result.append(next_token)
 
     def generate_string(self, input_ids: list[int]) -> str:
-
         result: list[int] = []
-
         while (True):
-
-            logits = self._cached_logits(tuple(input_ids))
+            logits = self._cached_logits(tuple(input_ids + result))
             next_token = logits.index(max(logits))
             decoded = self.model.decode([next_token])
-            print("token--",self.model.decode(next_token))
-
             if '"' in decoded and ' "' != decoded:
                 if len(decoded) == 1:
                     input_ids.extend(result)
                     return str(result)
-
                 else:
-                    text: str = decoded
                     i = decoded.index('"')
-                    token = text[:i]
-                    input_ids.extend(self.model.encode(token).tolist()[0])
+                    result.extend(self.model.encode(decoded[:i]).tolist()[0])
                 return str(self.model.decode(result))
-
             else:
-                input_ids.append(next_token)
+                result.append(next_token)
 
     def generate_parameters(
         self,
@@ -168,9 +159,7 @@ class ConstrainedDecoder:
 
                 output: dict[str, Any] = {}
                 for pos, (key, value) in enumerate(fn.parameters.items()):
-                    print(f"   Generating parameter '{key}'...")
-
-                    self.force_token(f'"{key}":"', input_ids)
+                    self.force_token(f'"{key}":', input_ids)
                     if value.type in ["number", "integer", "float"]:
 
                         number = self.generate_number(input_ids)
@@ -183,17 +172,15 @@ class ConstrainedDecoder:
 
                         input_ids.extend(self.model.encode('"').tolist()[0])
                         text = self.generate_string(input_ids)
+                        input_ids.extend(self.model.encode('"').tolist()[0])
 
                         if value.type == "boolean":
                             output[key] = text.lower() == "true"
                         else:
                             output[key] = text
-                        print("--------promt", self.model.decode(input_ids))
                     else:
                         raise ValueError("Invalid parameter type")
-                    if "}" in self.model.decode(input_ids):
-                        self.force_token(", ", input_ids)
-                    
+
                     if pos < len(fn.parameters) - 1:
                         self.force_token(", ", input_ids)
                     else:
@@ -213,8 +200,7 @@ class ConstrainedDecoder:
         )
 
         input_ids = self.model.encode(general_prompt).tolist()[0]
-        logits = self._cached_logits(tuple(input_ids))
-        function_names = [fn for fn in functions]
+        function_names = [fn.name for fn in functions]
 
         self.force_token('{"name: "', input_ids)
         function_name = self.generate_function_name(

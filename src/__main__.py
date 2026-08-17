@@ -4,7 +4,7 @@ from .main import main  # type: ignore
 # Qwen/Qwen3-1.7B
 
 if __name__ == "__main__":
-    # try:
-    main()
-    # except Exception as e:
-    #     print(f"Error: {e}")
+    try:
+        main()
+    except Exception as e:
+        print(f"Error: {e}")
