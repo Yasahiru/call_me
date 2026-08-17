@@ -136,25 +136,25 @@ class ConstrainedDecoder:
 
         while (True):
 
-            logits = self._cached_logits(tuple(input_ids + result))
+            logits = self._cached_logits(tuple(input_ids))
             next_token = logits.index(max(logits))
             decoded = self.model.decode([next_token])
-            # print("inp ids: ",
-            #     self.model.decode(input_ids)
-            # )
-            # print("decoded", decoded)
+            print("token--",self.model.decode(next_token))
+
             if '"' in decoded and ' "' != decoded:
                 if len(decoded) == 1:
                     input_ids.extend(result)
                     return str(result)
 
                 else:
+                    text: str = decoded
                     i = decoded.index('"')
-                    result.extend(self.model.encode(decoded[:i]).tolist()[0])
+                    token = text[:i]
+                    input_ids.extend(self.model.encode(token).tolist()[0])
                 return str(self.model.decode(result))
 
             else:
-                result.append(next_token)
+                input_ids.append(next_token)
 
     def generate_parameters(
         self,
@@ -188,10 +188,12 @@ class ConstrainedDecoder:
                             output[key] = text.lower() == "true"
                         else:
                             output[key] = text
-
+                        print("--------promt", self.model.decode(input_ids))
                     else:
                         raise ValueError("Invalid parameter type")
-
+                    if "}" in self.model.decode(input_ids):
+                        self.force_token(", ", input_ids)
+                    
                     if pos < len(fn.parameters) - 1:
                         self.force_token(", ", input_ids)
                     else:
@@ -205,11 +207,6 @@ class ConstrainedDecoder:
         prompt: str,
         functions: List[FunctionDefinition]
     ) -> FunctionCall:
-
-        print(f"\n{'='*50}")
-        print(f"Prompt: {prompt}")
-        print(f"{'='*50}")
-
         general_prompt = self.builder.build(
             prompt,
             functions
@@ -220,15 +217,11 @@ class ConstrainedDecoder:
         function_names = [fn for fn in functions]
 
         self.force_token('{"name: "', input_ids)
-        print("Selecting function...")
         function_name = self.generate_function_name(
             input_ids,
             function_names
         )
-        print(f" Function selected: {function_name}")
-
         self.force_token('", "parameters": {', input_ids)
-        print("Generating parameters...")
         parameters = self.generate_parameters(
             function_name,
             functions,
@@ -239,12 +232,12 @@ class ConstrainedDecoder:
         #     self.model.encode("}").tolist()[0][0]
         # )
 
-        print(f"{'='*50}")
-        print(
-            f'Result: {{"name": "{function_name}", '
-            f'"parameters": {parameters}}}'
-        )
-        print(f"{'='*50}\n")
+        # print(f"{'='*50}")
+        # print(
+        #     f'Result: {{"name": "{function_name}", '
+        #     f'"parameters": {parameters}}}'
+        # )
+        # print(f"{'='*50}\n")
 
         return FunctionCall(
             prompt=prompt,

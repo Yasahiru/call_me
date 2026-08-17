@@ -1,11 +1,10 @@
 [
     {
-        "prompt": "Replace all vowels in 'Programming is fun' with asterisks",
-        "name": "fn_substitute_string_with_regex",
+        "prompt": "Run the query 'INSERT INTO logs VALUES (1, 2, 3)' on the system database",
+        "name": "fn_execute_sql_query",
         "parameters": {
-            "source_string": "[45719, 374, 2464]",
-            "regex": "a|e|i|o|u",
-            "replacement": "asterisk"
+            "query": "",
+            "database": ""
         }
     }
 ]
