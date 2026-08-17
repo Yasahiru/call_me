@@ -1,11 +1,15 @@
 import os
-import time
 import json
 import argparse
-from .parser import Parser  # type ignore
-from llm_sdk import Small_LLM_Model
+from .parser import Parser
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from llm_sdk.llm_sdk import Small_LLM_Model
+else:
+    from llm_sdk import Small_LLM_Model
+
 from .decoder import ConstrainedDecoder
-from typing import Any
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -46,7 +50,7 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def main() -> None:
-    start = time.time
+    # start time removed (unused)
     args = parse_arguments()
 
     p = Parser()

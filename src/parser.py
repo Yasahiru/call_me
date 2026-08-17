@@ -1,4 +1,9 @@
-from .models import FunctionDefinition, ParameterDefinition, ReturnDefinition, Prompt  # type: ignore
+from .models import (
+    FunctionDefinition,
+    ParameterDefinition,
+    ReturnDefinition,
+    Prompt,
+)
 from typing import List
 import json
 import sys

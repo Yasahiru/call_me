@@ -1,8 +1,16 @@
 from functools import lru_cache
-from llm_sdk import Small_LLM_Model  # type: ignore
-from typing import List, Tuple, Set, Any
-from .prompt_builder import PromptBuilder  # type: ignore
-from .models import FunctionDefinition, FunctionCall  # type: ignore
+from typing import List, Tuple, Set, Any, TYPE_CHECKING
+
+# At runtime `llm_sdk` exposes `Small_LLM_Model` at the package top-level
+# but mypy may not see that. Import from the implementation module when
+# type-checking so mypy sees the symbol, and import the runtime symbol
+# normally when executing.
+if TYPE_CHECKING:
+    from llm_sdk.llm_sdk import Small_LLM_Model
+else:
+    from llm_sdk import Small_LLM_Model
+from .prompt_builder import PromptBuilder
+from .models import FunctionDefinition, FunctionCall
 
 # import sys
 
@@ -118,7 +126,7 @@ class ConstrainedDecoder:
 
         while True:
             next_token = self.filter_logits(input_ids + result, allowed)
-            decoded = self.model.decode(next_token)
+            decoded = self.model.decode([next_token])
 
             if ',' in decoded or '}' in decoded:
                 if not result:
@@ -224,6 +232,9 @@ class ConstrainedDecoder:
         #     f'"parameters": {parameters}}}'
         # )
         # print(f"{'='*50}\n")
+
+        if parameters is None:
+            raise ValueError("Could not generate parameters for function")
 
         return FunctionCall(
             prompt=prompt,

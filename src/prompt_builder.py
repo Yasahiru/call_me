@@ -1,4 +1,4 @@
-from .models import FunctionDefinition  # type: ignore
+from .models import FunctionDefinition
 from typing import List
 
 
