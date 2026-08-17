@@ -1,5 +1,8 @@
 [
   {
-    "prompt": "What is the sum of 2 and 3?"
+    "prompt": "What is the product of 3 and 5?"
+  },
+  {
+    "prompt": "Calculate compound interest on 1234567.89 at 0.0375 rate for 23 years"
   }
 ]

@@ -1,7 +1,7 @@
 import os
 import json
 import argparse
-from .parser import Parser
+import time
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -9,6 +9,8 @@ if TYPE_CHECKING:
 else:
     from llm_sdk import Small_LLM_Model
 
+from .parser import Parser
+from .color import COLORS, STYLE, RESET
 from .decoder import ConstrainedDecoder
 
 
@@ -50,7 +52,6 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def main() -> None:
-    # start time removed (unused)
     args = parse_arguments()
 
     p = Parser()
@@ -64,13 +65,33 @@ def main() -> None:
     constrained_decoder = ConstrainedDecoder(model)
 
     result: list[dict[str, Any]] = []
-    for prompt in prompts:
-        try:
-            output = constrained_decoder.decode(prompt.prompt, functions)
-            result.append(output.model_dump())
-            print()
-        except ValueError as e:
-            print(f"Error: {e}")
+
+    # Measure total LLM decoding time
+    start_time = time.perf_counter()
+    try:
+        for prompt in prompts:
+            try:
+                output = constrained_decoder.decode(prompt.prompt, functions)
+                result.append(output.model_dump())
+                print()
+            except ValueError as e:
+                print(f"Error: {e}")
+    except KeyboardInterrupt:
+        end_time = time.perf_counter()
+        elapsed = end_time - start_time
+        print(
+            f"\n{COLORS["GOLD"]} LLM total time: {elapsed:.3f} seconds"
+            f"{STYLE["UNDERLINE"]} {RESET}"
+        )
+        print(f"{COLORS["RED"]} STOP! {STYLE["BOLD"]} {RESET}")
+        exit(130)
+    else:
+        end_time = time.perf_counter()
+        elapsed = end_time - start_time
+        print(
+            f"{COLORS["GOLD"]} LLM total time: {elapsed:.3f} seconds"
+            f"{STYLE["UNDERLINE"]} {RESET}"
+        )
 
     try:
         with open(args.output, 'w') as f:
@@ -80,5 +101,5 @@ def main() -> None:
     except TypeError as e:
         raise ValueError(f"Error: output data is not JSON-serializable: {e}")
     except KeyboardInterrupt:
-        print("stop")
+        print(f"{COLORS["RED"]} STOP! {STYLE["BOLD"]} {RESET}")
         exit(130)

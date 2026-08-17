@@ -1,18 +1,15 @@
 from functools import lru_cache
 from typing import List, Tuple, Set, Any, TYPE_CHECKING
 
-# At runtime `llm_sdk` exposes `Small_LLM_Model` at the package top-level
-# but mypy may not see that. Import from the implementation module when
-# type-checking so mypy sees the symbol, and import the runtime symbol
-# normally when executing.
+
 if TYPE_CHECKING:
     from llm_sdk.llm_sdk import Small_LLM_Model
 else:
     from llm_sdk import Small_LLM_Model
+
+from .color import COLORS, STYLE, RESET
 from .prompt_builder import PromptBuilder
 from .models import FunctionDefinition, FunctionCall
-
-# import sys
 
 
 class ConstrainedDecoder:
@@ -202,18 +199,35 @@ class ConstrainedDecoder:
         prompt: str,
         functions: List[FunctionDefinition]
     ) -> FunctionCall:
+
+        print(f"{COLORS["RED"]} \n{'='*50} {STYLE["BOLD"]} {RESET}")
+        print(f"{COLORS["RED"]} Prompt: {prompt} {STYLE["BOLD"]} {RESET}")
+        print(f"{COLORS["RED"]}{'='*50} {STYLE["BOLD"]} {RESET}")
+
         general_prompt = self.builder.build(
             prompt,
             functions
         )
-
         input_ids = self.model.encode(general_prompt).tolist()[0]
         function_names = [fn.name for fn in functions]
 
+        print(
+            f" \n{COLORS["CYAN"]} Selecting function... "
+            f"{STYLE["DIM"]} {RESET}"
+        )
         self.force_token('{"name: "', input_ids)
         function_name = self.generate_function_name(
             input_ids,
             function_names
+        )
+        print(
+            f" {COLORS["MAGENTA"]} Function selected: "
+            f"{function_name} {STYLE["BOLD"]} {RESET}"
+        )
+
+        print(
+            f"{COLORS["CYAN"]}\n Generating parameters... "
+            f"{STYLE["BOLD"]} {RESET}"
         )
         self.force_token('", "parameters": {', input_ids)
         parameters = self.generate_parameters(
@@ -221,17 +235,18 @@ class ConstrainedDecoder:
             functions,
             input_ids
         )
+        print(f"{COLORS["MAGENTA"]} Finish.... {STYLE["BOLD"]} {RESET}")
 
-        # input_ids.append(
-        #     self.model.encode("}").tolist()[0][0]
-        # )
-
-        # print(f"{'='*50}")
-        # print(
-        #     f'Result: {{"name": "{function_name}", '
-        #     f'"parameters": {parameters}}}'
-        # )
-        # print(f"{'='*50}\n")
+        print(f"{COLORS["TEAL"]} \n{'='*50} {STYLE["BOLD"]} {RESET}")
+        print(
+            f"{COLORS["TEAL"]}"
+            f'Result: {{"name": "{function_name}", '
+            f"{STYLE["BOLD"]} {RESET}"
+            f"{COLORS["TEAL"]}"
+            f'"parameters": {parameters}}}'
+            f"{STYLE["BOLD"]} {RESET}"
+        )
+        print(f"{COLORS["TEAL"]}{'='*50} {STYLE["BOLD"]} {RESET}")
 
         if parameters is None:
             raise ValueError("Could not generate parameters for function")

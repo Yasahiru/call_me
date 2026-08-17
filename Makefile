@@ -41,15 +41,11 @@ test:
 
 lint:
 	uv run mypy src/ --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
-# 	uv run mypy tests/ --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 	uv run flake8 src/
-# 	uv run flake8 tests/
 
 lint-strict:
 	uv run mypy src/ --strict
-# 	uv run mypy tests/ --strict
 	uv run flake8 src/
-# 	uv run flake8 tests/
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} +
